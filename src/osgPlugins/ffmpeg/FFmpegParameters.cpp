@@ -5,17 +5,9 @@
 #include <iostream>
 #include <sstream>
 
-#if LIBAVCODEC_VERSION_MAJOR >= 53
 extern "C"
 {
     #include <libavutil/parseutils.h>
-}
-#define av_parse_video_frame_size av_parse_video_size
-#define av_parse_video_frame_rate av_parse_video_rate
-#endif
-
-extern "C"
-{
     #include <libavutil/pixdesc.h>
 }
 

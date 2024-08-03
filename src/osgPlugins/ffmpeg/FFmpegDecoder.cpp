@@ -11,12 +11,6 @@
 #include <string.h>
 #include <iostream>
 
-// Changes for FFMpeg version greater than 0.6
-#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(52, 64, 0)
-#define CODEC_TYPE_AUDIO AVMEDIA_TYPE_AUDIO
-#define CODEC_TYPE_VIDEO AVMEDIA_TYPE_VIDEO
-#endif
-
 #ifdef AVERROR
 #define AVERROR_IO AVERROR(EIO)
 #define AVERROR_NUMEXPECTED AVERROR(EDOM)
@@ -62,7 +56,7 @@ bool FFmpegDecoder::open(const std::string & filename, FFmpegParameters* paramet
     {
         // Open video file
         AVFormatContext * p_format_context = 0;
-        AVInputFormat *iformat = 0;
+        const AVInputFormat *iformat = 0;
 
         if (filename.compare(0, 5, "/dev/")==0)
         {
@@ -304,9 +298,9 @@ bool FFmpegDecoder::readNextPacketNormal()
         else
         {
             // Make the packet data available beyond av_read_frame() logical scope.
-            if ((error = av_dup_packet(&packet)) < 0) {
-                OSG_FATAL << "av_dup_packet() returned " << AvStrError(error) << std::endl;
-                throw std::runtime_error("av_dup_packet() failed");
+            if ((error = av_packet_make_refcounted(&packet)) < 0) {
+                OSG_FATAL << "av_packet_make_refcounted() returned " << AvStrError(error) << std::endl;
+                throw std::runtime_error("av_packet_make_refcounted() failed");
             }
 
             m_pending_packet = FFmpegPacket(packet);

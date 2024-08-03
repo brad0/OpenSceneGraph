@@ -19,13 +19,6 @@
 #include <osgDB/FileNameUtils>
 #include <osgDB/FileUtils>
 
-
-#if LIBAVCODEC_VERSION_MAJOR >= 53 || \
-    (LIBAVCODEC_VERSION_MAJOR==52 && LIBAVCODEC_VERSION_MINOR>=30) || \
-    (LIBAVCODEC_VERSION_MAJOR==52 && LIBAVCODEC_VERSION_MINOR==20 && LIBAVCODEC_VERSION_MICRO >= 1)
-    #define USE_AV_LOCK_MANAGER
-#endif
-
 extern "C" {
 
 static void log_to_osg(void* /*ptr*/, int level, const char *fmt, va_list vl)
@@ -112,13 +105,6 @@ public:
         supportsOption("rtsp_transport", "RTSP transport (udp, tcp, udp_multicast or http)");
 
         av_log_set_callback(log_to_osg);
-
-#ifdef USE_AV_LOCK_MANAGER
-        // enable thread locking
-        av_lockmgr_register(&lockMgr);
-#endif
-        // Register all FFmpeg formats/codecs
-        av_register_all();
 
         avformat_network_init();
     }
@@ -218,39 +204,6 @@ private:
             }
         }
     }
-
-#ifdef USE_AV_LOCK_MANAGER
-    static int lockMgr(void **mutex, enum AVLockOp op)
-    {
-        // returns are 0 success
-        OpenThreads::Mutex **m=(OpenThreads::Mutex**)mutex;
-        if (op==AV_LOCK_CREATE)
-        {
-            *m=new OpenThreads::Mutex;
-            return !*m;
-        }
-        else if (op==AV_LOCK_DESTROY)
-        {
-            delete *m;
-            return 0;
-        }
-        else if (op==AV_LOCK_OBTAIN)
-        {
-            (*m)->lock();
-            return 0;
-        }
-        else if (op==AV_LOCK_RELEASE)
-        {
-            (*m)->unlock();
-            return 0;
-        }
-        else
-        {
-            return -1;
-        }
-    }
-#endif
-
 };
 
 
